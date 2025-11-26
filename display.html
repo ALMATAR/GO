@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>شاشة العرض</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
-        body { font-family: 'Cairo', sans-serif; overflow: hidden; }
+        body { font-family: 'Cairo', sans-serif; overflow: hidden; background: linear-gradient(135deg,#eff6ff,#e9d5ff); }
         
         @keyframes slideDown {
             from { transform: translateY(-100%); opacity: 0; }
@@ -40,9 +40,13 @@
         .clinic-card.paused {
             opacity: 0.5;
         }
+
+        /* prevent body scaling causing scrollbars */
+        html, body { height: 100%; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 h-screen flex flex-col">
+<body class="h-screen flex flex-col">
+
     <!-- Top Bar -->
     <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white px-6 py-3 flex items-center justify-between shadow-lg">
         <div class="flex items-center gap-4">
@@ -52,6 +56,21 @@
             <h1 id="centerName" class="text-2xl font-bold">المركز الطبي</h1>
         </div>
         <div class="flex items-center gap-6">
+            <!-- Settings Menu Button -->
+            <button onclick="toggleSettingsMenu()" class="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+            </button>
+
+            <!-- Zoom buttons in the top bar as requested -->
+            <div class="flex gap-2 items-center">
+                <button onclick="zoomIn()" title="تكبير" class="bg-white text-gray-800 px-3 py-2 rounded-lg font-bold">🔍+</button>
+                <button onclick="zoomOut()" title="تصغير" class="bg-white text-gray-800 px-3 py-2 rounded-lg font-bold">🔍-</button>
+                <button onclick="resetZoom()" title="إعادة تعيين التكبير" class="bg-white text-gray-800 px-3 py-2 rounded-lg font-bold">⟲</button>
+            </div>
+
             <select id="screenSelect" class="bg-white text-gray-800 px-4 py-2 rounded-lg font-bold">
                 <option value="1">الشاشة 1</option>
                 <option value="2">الشاشة 2</option>
@@ -62,6 +81,55 @@
                 <div id="currentTime" class="text-xl font-bold"></div>
                 <div id="currentDate" class="text-sm"></div>
             </div>
+            <button onclick="toggleFullscreen()" id="fullscreenBtn" class="bg-white text-gray-800 px-3 py-2 rounded-lg font-bold">📺 تفعيل ملء الشاشة</button>
+        </div>
+    </div>
+
+    <!-- Settings Menu -->
+    <div id="settingsMenu" class="hidden fixed top-16 left-6 bg-white rounded-lg shadow-2xl p-6 z-50 w-80">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">إعدادات العرض</h3>
+        
+        <div class="space-y-4">
+            <!-- Screen Selection -->
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">رقم الشاشة:</label>
+                <select id="screenSelectMenu" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    <option value="1">الشاشة 1</option>
+                    <option value="2">الشاشة 2</option>
+                    <option value="3">الشاشة 3</option>
+                    <option value="4">الشاشة 4</option>
+                </select>
+            </div>
+
+            <!-- Zoom Controls -->
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">التكبير/التصغير:</label>
+                <div class="flex gap-2">
+                    <button onclick="zoomIn()" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-bold">
+                        🔍+ تكبير
+                    </button>
+                    <button onclick="zoomOut()" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-bold">
+                        🔍- تصغير
+                    </button>
+                </div>
+                <button onclick="resetZoom()" class="w-full mt-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 font-bold">
+                    إعادة تعيين
+                </button>
+                <p class="text-sm text-gray-600 mt-2 text-center">المستوى: <span id="zoomLevel">100%</span></p>
+            </div>
+
+            <!-- Fullscreen -->
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">وضع ملء الشاشة:</label>
+                <button onclick="toggleFullscreen()" id="fullscreenBtnMenu" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-bold">
+                    📺 تفعيل ملء الشاشة
+                </button>
+            </div>
+
+            <!-- Close Button -->
+            <button onclick="toggleSettingsMenu()" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 font-bold">
+                إغلاق
+            </button>
         </div>
     </div>
 
@@ -135,28 +203,29 @@
     </div>
 
     <!-- Bottom News Ticker -->
-    <div class="bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-3 overflow-hidden relative">
+    <div class="bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-4 overflow-hidden relative">
         <div id="newsTickerContainer" class="absolute whitespace-nowrap">
-            <span id="newsTicker" class="text-xl font-bold px-4 inline-block">مرحباً بكم في المركز الطبي - نتمنى لكم الشفاء العاجل</span>
+            <span id="newsTicker" class="text-2xl font-bold px-8 inline-block">مرحباً بكم في المركز الطبي - نتمنى لكم الشفاء العاجل</span>
         </div>
     </div>
 
     <script>
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyArFKjBYsFhsPyJPJpjLhH2eSEHlUFEzhI",
-  authDomain: "queue-717d5.firebaseapp.com",
-  databaseURL: "https://queue-717d5-default-rtdb.firebaseio.com",
-  projectId: "queue-717d5",
-  storageBucket: "queue-717d5.firebasestorage.app",
-  messagingSenderId: "837806460328",
-  appId: "1:837806460328:web:f2070b93a2784b1b25619d",
-  measurementId: "G-GM30LE46F6"
-};
+        // Firebase config (كما أرسلت)
+        const firebaseConfig = {
+          apiKey: "AIzaSyArFKjBYsFhsPyJPJpjLhH2eSEHlUFEzhI",
+          authDomain: "queue-717d5.firebaseapp.com",
+          databaseURL: "https://queue-717d5-default-rtdb.firebaseio.com",
+          projectId: "queue-717d5",
+          storageBucket: "queue-717d5.firebasestorage.app",
+          messagingSenderId: "837806460328",
+          appId: "1:837806460328:web:f2070b93a2784b1b25619d",
+          measurementId: "G-GM30LE46F6"
+        };
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // Variables
         let currentScreen = 1;
         let audioPath = 'audio/';
         let videoPath = 'media/';
@@ -165,23 +234,35 @@ const firebaseConfig = {
         let videos = [];
         let currentVideoIndex = 0;
         let audioCache = {};
-        let videoCache = {};
         let newsTickerInterval;
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
         window.onload = function() {
             updateDateTime();
             setInterval(updateDateTime, 1000);
-            
+
             loadSettings();
             loadClinics();
             listenForCalls();
             listenForAlerts();
             loadVideos();
-            
+
+            // Sync top select with settings menu select
             document.getElementById('screenSelect').addEventListener('change', (e) => {
                 currentScreen = parseInt(e.target.value);
+                document.getElementById('screenSelectMenu').value = currentScreen;
                 loadClinics();
             });
+
+            document.getElementById('screenSelectMenu').addEventListener('change', (e) => {
+                currentScreen = parseInt(e.target.value);
+                document.getElementById('screenSelect').value = currentScreen;
+                loadClinics();
+            });
+
+            // set initial icons
+            updatePlayPauseIcons();
+            updateMuteIcons();
         };
 
         function updateDateTime() {
@@ -220,14 +301,17 @@ const firebaseConfig = {
             
             const container = document.getElementById('newsTickerContainer');
             const ticker = document.getElementById('newsTicker');
-            const containerWidth = container.parentElement.offsetWidth;
+            const parent = container.parentElement;
+            const containerWidth = parent.offsetWidth;
             const tickerWidth = ticker.offsetWidth;
             
             let position = containerWidth;
             container.style.transform = `translateX(${position}px)`;
+            container.style.top = '50%';
+            container.style.transform = `translateX(${position}px) translateY(-50%)`;
             
             const pixelsPerSecond = speed;
-            const interval = 20; // Update every 20ms
+            const interval = 20;
             const pixelsPerInterval = (pixelsPerSecond / 1000) * interval;
             
             newsTickerInterval = setInterval(() => {
@@ -237,7 +321,7 @@ const firebaseConfig = {
                     position = containerWidth;
                 }
                 
-                container.style.transform = `translateX(${position}px)`;
+                container.style.transform = `translateX(${position}px) translateY(-50%)`;
             }, interval);
         }
 
@@ -293,6 +377,7 @@ const firebaseConfig = {
         function listenForCalls() {
             db.ref('calls').orderByChild('timestamp').limitToLast(1).on('child_added', (snapshot) => {
                 const call = snapshot.val();
+                if (!call) return;
                 if (call.timestamp > Date.now() - 5000) {
                     // Check if the clinic is on current screen
                     db.ref('clinics/' + call.clinicId).once('value', (clinicSnapshot) => {
@@ -311,6 +396,7 @@ const firebaseConfig = {
         function listenForAlerts() {
             db.ref('alerts').orderByChild('timestamp').limitToLast(1).on('child_added', (snapshot) => {
                 const alert = snapshot.val();
+                if (!alert) return;
                 if (alert.timestamp > Date.now() - 5000) {
                     showNotification(alert.message, new Date(alert.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }));
                 }
@@ -354,30 +440,68 @@ const firebaseConfig = {
         async function playCallAudio(number, clinicName) {
             try {
                 // Play ding
-                await playAudio(audioPath + 'ding.mp3');
+                await playAudioWithRate(audioPath + 'ding.mp3', 1);
                 
-                // Play number
-                await playAudio(audioPath + number + '.mp3');
-                
-                // Try to find clinic audio
-                db.ref('clinics').once('value', (snapshot) => {
-                    const clinics = snapshot.val() || {};
-                    const clinic = Object.values(clinics).find(c => c.name === clinicName);
-                    if (clinic) {
-                        playAudio(audioPath + 'clinic' + clinic.number + '.mp3').catch(() => {
-                            speakText(`التوجه إلى ${clinicName}`);
-                        });
+                // Play number with speech rate (try mp3 then fallback to TTS)
+                try {
+                    await playAudioWithRate(audioPath + number + '.mp3', speechRate);
+                } catch(e) {
+                    // fallback to TTS for number
+                    speakText(number);
+                }
+
+                // Try to find clinic audio and play, else TTS clinic name
+                const clinicsSnap = await db.ref('clinics').once('value');
+                const clinics = clinicsSnap.val() || {};
+                const clinic = Object.values(clinics).find(c => c.name === clinicName);
+                if (clinic) {
+                    try {
+                        await playAudioWithRate(audioPath + 'clinic' + clinic.number + '.mp3', speechRate);
+                    } catch(e) {
+                        speakText(`التوجه إلى ${clinicName}`);
                     }
-                });
+                } else {
+                    speakText(`التوجه إلى ${clinicName}`);
+                }
             } catch (err) {
-                console.log('Audio file not found, using TTS');
+                console.log('Audio play error, fallback to TTS', err);
                 speakText(`على العميل رقم ${number} التوجه إلى ${clinicName}`);
             }
         }
 
-        function playAudio(src) {
+        async function playAudioWithRate(url, rate) {
+            // Uses WebAudio for playback rate control
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('not-found');
+                    const arrayBuffer = await response.arrayBuffer();
+                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    const source = audioContext.createBufferSource();
+                    source.buffer = audioBuffer;
+                    source.playbackRate.value = rate;
+                    source.connect(audioContext.destination);
+
+                    source.onended = () => resolve();
+                    source.start(0);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+
+        // single playAudio (used by preload and fallback)
+        function playAudioSimple(src) {
             return new Promise((resolve, reject) => {
-                const audio = new Audio(src);
+                const filename = src.split('/').pop();
+                let audio;
+                
+                if (audioCache[filename]) {
+                    audio = audioCache[filename].cloneNode();
+                } else {
+                    audio = new Audio(src);
+                }
+                
                 audio.onended = resolve;
                 audio.onerror = reject;
                 audio.play().catch(reject);
@@ -390,6 +514,8 @@ const firebaseConfig = {
                 utterance.lang = 'ar-SA';
                 utterance.rate = speechRate;
                 speechSynthesis.speak(utterance);
+            } else {
+                console.log('TTS not supported');
             }
         }
 
@@ -417,7 +543,7 @@ const firebaseConfig = {
                     video.addEventListener('ended', () => {
                         currentVideoIndex = (currentVideoIndex + 1) % videos.length;
                         video.src = videos[currentVideoIndex];
-                        video.play();
+                        video.play().catch(err => console.log('video play error', err));
                     });
                     
                     video.addEventListener('error', () => {
@@ -425,7 +551,7 @@ const firebaseConfig = {
                         currentVideoIndex = (currentVideoIndex + 1) % videos.length;
                         if (currentVideoIndex < videos.length) {
                             video.src = videos[currentVideoIndex];
-                            video.play();
+                            video.play().catch(err => console.log('video play error', err));
                         }
                     });
                     
@@ -434,30 +560,43 @@ const firebaseConfig = {
             });
         }
 
+        // Play / Pause for video
         function togglePlayPause() {
+            const video = document.getElementById('videoPlayer');
+            if (video.paused) {
+                video.play().catch(() => {});
+            } else {
+                video.pause();
+            }
+            updatePlayPauseIcons();
+        }
+
+        function updatePlayPauseIcons() {
             const video = document.getElementById('videoPlayer');
             const playIcon = document.getElementById('playIcon');
             const pauseIcon = document.getElementById('pauseIcon');
-            
+
             if (video.paused) {
-                video.play();
-                playIcon.classList.add('hidden');
-                pauseIcon.classList.remove('hidden');
-            } else {
-                video.pause();
                 playIcon.classList.remove('hidden');
                 pauseIcon.classList.add('hidden');
+            } else {
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
             }
         }
 
+        // Mute toggle
         function toggleMute() {
+            const video = document.getElementById('videoPlayer');
+            video.muted = !video.muted;
+            updateMuteIcons();
+        }
+
+        function updateMuteIcons() {
             const video = document.getElementById('videoPlayer');
             const muteIcon = document.getElementById('muteIcon');
             const unmuteIcon = document.getElementById('unmuteIcon');
-            
-            video.muted = !video.muted;
-            
-            if (video.muted) {
+            if (video.muted || video.volume === 0) {
                 muteIcon.classList.remove('hidden');
                 unmuteIcon.classList.add('hidden');
             } else {
@@ -466,28 +605,21 @@ const firebaseConfig = {
             }
         }
 
-        function changeVolume(value) {
+        // Volume change
+        function changeVolume(val) {
             const video = document.getElementById('videoPlayer');
-            video.volume = value / 100;
+            video.volume = val / 100;
             video.muted = false;
-            document.getElementById('volumeDisplay').textContent = value + '%';
-            
-            const muteIcon = document.getElementById('muteIcon');
-            const unmuteIcon = document.getElementById('unmuteIcon');
-            muteIcon.classList.add('hidden');
-            unmuteIcon.classList.remove('hidden');
+            document.getElementById('volumeDisplay').textContent = val + '%';
+            updateMuteIcons();
         }
 
+        // Preload audio
         function preloadAudio() {
-            // Preload common audio files
             const commonFiles = ['ding.mp3'];
-            for (let i = 1; i <= 100; i++) {
-                commonFiles.push(i + '.mp3');
-            }
-            for (let i = 1; i <= 20; i++) {
-                commonFiles.push('clinic' + i + '.mp3');
-            }
-            
+            for (let i = 1; i <= 100; i++) commonFiles.push(i + '.mp3');
+            for (let i = 1; i <= 20; i++) commonFiles.push('clinic' + i + '.mp3');
+
             commonFiles.forEach(file => {
                 const audio = new Audio(audioPath + file);
                 audio.preload = 'auto';
@@ -495,22 +627,82 @@ const firebaseConfig = {
             });
         }
 
-        function playAudio(src) {
-            return new Promise((resolve, reject) => {
-                const filename = src.split('/').pop();
-                let audio;
-                
-                if (audioCache[filename]) {
-                    audio = audioCache[filename].cloneNode();
-                } else {
-                    audio = new Audio(src);
-                }
-                
-                audio.onended = resolve;
-                audio.onerror = reject;
-                audio.play().catch(reject);
-            });
+        // Notification & UI helpers already included above
+
+        // Settings menu toggle
+        function toggleSettingsMenu() {
+            const menu = document.getElementById('settingsMenu');
+            menu.classList.toggle('hidden');
         }
+
+        // Fullscreen toggle
+        function toggleFullscreen() {
+            const elem = document.documentElement;
+            const btn = document.getElementById('fullscreenBtn');
+            const btnMenu = document.getElementById('fullscreenBtnMenu');
+
+            if (!document.fullscreenElement) {
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) { /* Safari */
+                    elem.webkitRequestFullscreen();
+                }
+                if (btn) btn.textContent = "📺 إيقاف ملء الشاشة";
+                if (btnMenu) btnMenu.textContent = "📺 إيقاف ملء الشاشة";
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+                if (btn) btn.textContent = "📺 تفعيل ملء الشاشة";
+                if (btnMenu) btnMenu.textContent = "📺 تفعيل ملء الشاشة";
+            }
+        }
+
+        // Zoom controls (applies transform to main content to keep header fixed)
+        let zoomLevel = 1;
+        const minZoom = 0.5;
+        const maxZoom = 2.5;
+
+        function zoomIn() {
+            zoomLevel = Math.min(maxZoom, +(zoomLevel + 0.1).toFixed(2));
+            applyZoom();
+        }
+
+        function zoomOut() {
+            zoomLevel = Math.max(minZoom, +(zoomLevel - 0.1).toFixed(2));
+            applyZoom();
+        }
+
+        function resetZoom() {
+            zoomLevel = 1;
+            applyZoom();
+        }
+
+        function applyZoom() {
+            // We'll scale the middle area (main content) but keep header/footer normal
+            const mainAreas = document.querySelectorAll('.flex-1, .w-1/4, .w-1/6');
+            mainAreas.forEach(el => {
+                el.style.transform = `scale(${zoomLevel})`;
+                el.style.transformOrigin = 'top right';
+            });
+            document.getElementById('zoomLevel').textContent = Math.round(zoomLevel * 100) + '%';
+        }
+
+        // update icons when video state changes
+        document.getElementById('videoPlayer')?.addEventListener?.('play', updatePlayPauseIcons);
+        document.getElementById('videoPlayer')?.addEventListener?.('pause', updatePlayPauseIcons);
+        document.getElementById('videoPlayer')?.addEventListener?.('volumechange', updateMuteIcons);
+
+        // ensure event listeners exist after DOM ready
+        document.addEventListener('visibilitychange', () => {
+            // resume audioContext on user interaction / visibility
+            if (document.visibilityState === 'visible' && audioContext.state === 'suspended') {
+                audioContext.resume().catch(()=>{});
+            }
+        });
+
     </script>
 </body>
 </html>
