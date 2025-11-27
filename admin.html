@@ -749,12 +749,8 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database(); // Realtime Database
+const auth = firebase.auth();
 const firestore = firebase.firestore(); // Firestore
-
-        
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const auth = firebase.auth();
 
         let mediaRecorder;
         let recordedChunks = [];
